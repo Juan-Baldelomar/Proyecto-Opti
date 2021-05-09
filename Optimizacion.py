@@ -71,8 +71,8 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
     for p in range(pmin, pmax+1):
         f_model.p = p
 
-        # x_p, f_model = optimizar(x0, f_model)
-        # solutions.append(x_p)
+        # x_p = optimizar(x0, f_model)
+        #solutions.append(x_p)
         S.append(f_model.S())
         # abs_diff.append(f_model.abs_diff(x_p))
 
@@ -98,7 +98,4 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
             max_p = p
 
     return solutions[max_p]
-
-
-
 
