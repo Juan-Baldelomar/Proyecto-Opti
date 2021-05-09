@@ -48,10 +48,10 @@ class Linear_Model(TestFunction):
 
             # get indexes of first-p Ri (lower values)
             dataset_index = self.R_index[:self.p, 1].astype(int)
+            y_model_diff = self.dataset[:, -1] - self.function(x)
+            grad[i] = np.sum(np.multiply(-self.dataset[dataset_index, i], y_model_diff[dataset_index]))
 
-            grad[i] = np.sum(self.dataset[dataset_index, i])
-
-        grad[-1] = 1
+        grad[-1] = -np.sum(y_model_diff[dataset_index])
 
         return grad
 
@@ -62,8 +62,8 @@ class Linear_Model(TestFunction):
         dataset_index = self.R_index[:self.p, 1].astype(int)
 
         # Set each Jacobian Entry
-        J[:, :-1] = self.dataset[dataset_index, :-1]
-        J[:, -1] = 1
+        J[:, :-1] = -self.dataset[dataset_index, :-1]
+        J[:, -1] = -1
 
         return J
 
