@@ -66,10 +66,10 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
             if test_function.function(x+d, False) < test_function.function(x, False):
                 break
 
-                # Actualization
-                lmbda = max(lmbda_min, lmbda / np.sqrt(lmbda))  # TODO: in [max(lmbda_min, lmbda/np.sqrt(lmbda)), lmbda]
-                x = x + d
-                g = test_function.function(x)
+            # Actualization
+            lmbda = max(lmbda_min, lmbda / np.sqrt(lmbda))  # TODO: in [max(lmbda_min, lmbda/np.sqrt(lmbda)), lmbda]
+            x = x + d
+            g = test_function.function(x)
 
         return x
 
