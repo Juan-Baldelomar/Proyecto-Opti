@@ -27,7 +27,7 @@ class TestFunction(object):
         raise NotImplementedError
 
     # returns sum of first p values of R_Index
-    def S(self):
+    def S(self, x: np.ndarray, keep_record=True):
         raise NotImplementedError
 
     # calculates each Ri and sorts it with its index
@@ -39,9 +39,11 @@ class Linear_Model(TestFunction):
     def __init__(self, n, p, dataset: np.ndarray):
         super().__init__(n, p, dataset)
 
+    # model function to adjust
     def function(self, x: np.ndarray, keep_record=True):
         return np.matmul(self.dataset[:, :-1], x[:-1]) + x[-1]
 
+    # gradient of objective function
     def gradient(self, x: np.ndarray, keep_record=True):
         grad = np.zeros(self.n)
         for i in range(self.n - 1):
@@ -52,6 +54,11 @@ class Linear_Model(TestFunction):
             grad[i] = np.sum(np.multiply(-self.dataset[dataset_index, i], y_model_diff[dataset_index]))
 
         grad[-1] = -np.sum(y_model_diff[dataset_index])
+
+        # record grad norm
+        if keep_record:
+            norm_gk = np.linalg.norm(grad)
+            self.norm_g_k.append(norm_gk)
 
         return grad
 
@@ -70,11 +77,18 @@ class Linear_Model(TestFunction):
     def abs_diff(self, x: np.ndarray):
         return np.abs(self.function(x) - self.dataset[:-1])
 
-    def S(self):
+    # basically this is the objective function
+    def S(self, x: np.ndarray, keep_record=True):
+
+        # sort Ri's
+        self.getR(x)
+
         sum_ = 0
         for i in range(self.p):
             sum_ += self.R_index[i][0]
 
+        if keep_record:
+            self.f_k.append(sum_)
         return sum_
 
     def getR(self, x: np.ndarray):

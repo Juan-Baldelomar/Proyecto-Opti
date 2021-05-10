@@ -63,13 +63,15 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
             d = compute_direction(test_function.Jacobian(x), gamma, g)
 
             # Simple decrease test: (trust-region simplification)
-            if test_function.function(x+d, False) < test_function.function(x, False):
+            if test_function.S(x+d) < test_function.S(x, False):
                 break
+            else:
+                lmbda = lmbda_hat * lmbda
 
-            # Actualization
-            lmbda = max(lmbda_min, lmbda / np.sqrt(lmbda))  # TODO: in [max(lmbda_min, lmbda/np.sqrt(lmbda)), lmbda]
-            x = x + d
-            g = test_function.function(x)
+        # Actualization
+        lmbda = max(lmbda_min, lmbda / np.sqrt(lmbda))  # TODO: in [max(lmbda_min, lmbda/np.sqrt(lmbda)), lmbda]
+        x = x + d
+        g = test_function.gradient(x)
 
         return x
 
@@ -142,10 +144,10 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
     for p in range(pmin, pmax+1):
         f_model.p = p
 
-        # x_p = optimizar(x0, f_model)
-        #solutions.append(x_p)
-        S.append(f_model.S())
-        # abs_diff.append(f_model.abs_diff(x_p))
+        x_p = lm_lovo(x0, 0.01, 1e-4, 1, 2, f_model)
+        solutions.append(x_p)
+        S.append(f_model.S(x_p))
+        abs_diff.append(f_model.abs_diff(x_p))
 
     # preprocess solutions
     rem_indexes = preprocess(solutions, S, abs_diff, r=len(f_model.dataset))
@@ -153,6 +155,9 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
     # build similarity matrix
     M = buildSimilarityMatrix(solutions, rem_indexes)
     C = np.zeros(len(M))
+
+    if epsilon == -1:
+        epsilon = np.min(M) + np.mean(M) / (1 + np.sqrt(pmax))
 
     for i in len(M):
         k = 0
