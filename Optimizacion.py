@@ -41,6 +41,7 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
 
     assert (lmbda_0 > 0. and lmbda_hat > 1.)
 
+    # get I_min (combination where first p values of Ri are the lowest)
     test_function.getR(x)
 
     # Initializaton
@@ -140,27 +141,30 @@ def preprocess(solutions, S, abs_diff, r):
 def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
     assert (0 <= pmin < pmax)
 
-    S = []
-    abs_diff = []
-    solutions = []
+    S = []              # vector of Sp
+    abs_diff = []       # vector of abs diff between yi and model(x, ti)
+    solutions = []      # vector of x^* for each pmin <= p <= pmax
 
     # compute set of solutions for p in range(pmin, pmax)
     for p in range(pmin, pmax+1):
         f_model.p = p
 
+        # find optimum
         x_p = lm_lovo(x0, 0.01, 1e-4, 1, 2, f_model)
         solutions.append(x_p)
         S.append(f_model.S(x_p))
         abs_diff.append(f_model.abs_diff(x_p))
 
-    # preprocess solutions
     solutions = np.array(solutions)
+
+    # preprocess solutions
     rem_indexes = preprocess(solutions, S, abs_diff, r=len(f_model.dataset))
 
     # build similarity matrix
     M = buildSimilarityMatrix(solutions, rem_indexes)
     C = np.zeros(len(M))
 
+    # calc epsilon if it is not given
     if epsilon == -1:
         epsilon = np.min(M) + np.mean(M) / (1 + np.sqrt(pmax))
 
@@ -178,4 +182,5 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
             max_k = C[p]
             max_p = p
 
-    return solutions[max_p]
+    # return x^* and maxp number of trusted points
+    return solutions[max_p], pmin + max_p

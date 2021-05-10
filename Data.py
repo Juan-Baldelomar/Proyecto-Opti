@@ -92,12 +92,6 @@ def linear_model(x):
 def linear_model2D(x, a1, a2, b):
     return a1 * x[:, 0] + a2 * x[:, 1] + b
 
+def cuadratic_model2D(x, a, b, c):
+    return a * x**2 + b*x + c
 
-# # Test Read and Write data
-# data_g = generateRandomData(linear_model, n=100, std_noise=5)
-# saveData("linear_data.cvs", data_g)
-# read_data = readData('linear_data.cvs')
-#
-# # plot data
-# plt.scatter(read_data[:,0], read_data[:, 1])
-# plt.show()

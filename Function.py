@@ -1,5 +1,4 @@
 import numpy as np
-import random
 
 
 class TestFunction(object):
@@ -17,7 +16,7 @@ class TestFunction(object):
         raise NotImplementedError
 
     # returns vector of abs difference between model function applied to each point and the real value y_i (last column in dataset)
-    def abs_diff(self, x:np.ndarray):
+    def abs_diff(self, x: np.ndarray):
         raise NotImplementedError
 
     def gradient(self, x: np.ndarray):
