@@ -25,6 +25,7 @@ def check_tolerance(value, value_new, epislon=1e-8):
 def compute_direction(J: np.ndarray, gamma: float, g: np.ndarray):
     A = np.matmul(J.T, J) + np.diag([gamma]*J.shape[1])
     try:
+        print(g)
         L = np.linalg.cholesky(A)
         y = solve_triangular(L, -g, lower=True)
         d = solve_triangular(L.T, y, lower=False)
@@ -55,7 +56,7 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
             print(" ")
             print("Iteration n.", k, "results:")
             print("|g(x)| = ", g_norm)
-            print("f(x) = ", test_function.function(x))
+            print("f(x) = ", test_function.S(x))
 
         while True:
             # Calculate direction
@@ -63,7 +64,7 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
             d = compute_direction(test_function.Jacobian(x), gamma, g)
 
             # Simple decrease test: (trust-region simplification)
-            if test_function.S(x+d) < test_function.S(x, False):
+            if test_function.S(x+d, False) < test_function.S(x, False):
                 break
             else:
                 lmbda = lmbda_hat * lmbda
@@ -134,7 +135,7 @@ def preprocess(solutions, S, abs_diff, r):
 
 
 def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
-    assert (epsilon > 0 and pmin >= 0 and pmax < pmin)
+    assert (pmin >= 0 and pmin < pmax)
 
     S = []
     abs_diff = []

@@ -1,16 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import Optimizacion as op
+import Optimizacion
 import Function as TestFunction
-import Data as data
+import Data
 import time
 
 
 print("Hola Como estas ")
 
 
-dataset = data.read_data("linear_data.csv")
-plt.plot(dataset[:,0], dataset[:, 1])
+dataset = Data.readData("linear_data.cvs")
+plt.scatter(dataset[:,0], dataset[:, 1])
 plt.show()
 
-#linear_model = TestFunction()
+linear_model = TestFunction.Linear_Model(2, 5, dataset)
+x0 = np.array([1, 2])
+xopt = Optimizacion.RAFF(x0, linear_model, 5, 10)

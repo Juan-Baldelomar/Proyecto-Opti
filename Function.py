@@ -92,13 +92,13 @@ class Linear_Model(TestFunction):
         return sum_
 
     def getR(self, x: np.ndarray):
-        R = 1/2 * (self.function(x) - self.dataset[:-1])**2
+        R = 1/2 * (self.function(x) - self.dataset[:, -1])**2
 
         # build vector of R value and its index
         for i in range(len(R)):
             self.R_index[i] = (R[i], i)
 
         # sort R_index by first attribute, ie, R value
-        self.R_index = self.R_index[np.argsort(self.R_index[: 0])]
+        self.R_index = self.R_index[np.argsort(self.R_index[:, 0])]
 
 
