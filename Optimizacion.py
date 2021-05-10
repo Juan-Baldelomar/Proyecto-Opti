@@ -25,9 +25,10 @@ def check_tolerance(value, value_new, epislon=1e-8):
 def compute_direction(J: np.ndarray, gamma: float, g: np.ndarray):
     A = np.matmul(J.T, J) + np.diag([gamma]*J.shape[1])
     try:
-        print(g)
+        print("gradient: ", g)
         L = np.linalg.cholesky(A)
         y = solve_triangular(L, -g, lower=True)
+        print("y: ", y)
         d = solve_triangular(L.T, y, lower=False)
         return d
     except np.linalg.LinAlgError:
@@ -39,6 +40,8 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
             lmbda_hat: float, test_function: TestFunction, max_iter: int = 400):
 
     assert (lmbda_0 > 0. and lmbda_hat > 1.)
+
+    test_function.getR(x)
 
     # Initializaton
     lmbda = lmbda_0
@@ -135,11 +138,11 @@ def preprocess(solutions, S, abs_diff, r):
 
 
 def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
-    assert (pmin >= 0 and pmin < pmax)
+    assert (0 <= pmin < pmax)
 
     S = []
     abs_diff = []
-    solutions = np.array([])
+    solutions = []
 
     # compute set of solutions for p in range(pmin, pmax)
     for p in range(pmin, pmax+1):
@@ -151,6 +154,7 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
         abs_diff.append(f_model.abs_diff(x_p))
 
     # preprocess solutions
+    solutions = np.array(solutions)
     rem_indexes = preprocess(solutions, S, abs_diff, r=len(f_model.dataset))
 
     # build similarity matrix
@@ -160,16 +164,16 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
     if epsilon == -1:
         epsilon = np.min(M) + np.mean(M) / (1 + np.sqrt(pmax))
 
-    for i in len(M):
+    for i in range(len(M)):
         k = 0
-        for j in len(M):
+        for j in range(len(M)):
             if M[i][j] < epsilon:
                 k += 1
         C[i] = k
 
     # see position of solutions that have more votes and return that x^*
     max_k, max_p = 0, 0
-    for p in len(C):
+    for p in range(len(C)):
         if max_k <= C[p]:
             max_k = C[p]
             max_p = p

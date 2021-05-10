@@ -46,11 +46,12 @@ class Linear_Model(TestFunction):
     # gradient of objective function
     def gradient(self, x: np.ndarray, keep_record=True):
         grad = np.zeros(self.n)
-        for i in range(self.n - 1):
 
-            # get indexes of first-p Ri (lower values)
-            dataset_index = self.R_index[:self.p, 1].astype(int)
-            y_model_diff = self.dataset[:, -1] - self.function(x)
+        # get indexes of first-p Ri (lower values)
+        dataset_index = self.R_index[:self.p, 1].astype(int)
+        y_model_diff = self.dataset[:, -1] - self.function(x)
+
+        for i in range(self.n - 1):
             grad[i] = np.sum(np.multiply(-self.dataset[dataset_index, i], y_model_diff[dataset_index]))
 
         grad[-1] = -np.sum(y_model_diff[dataset_index])
@@ -75,7 +76,7 @@ class Linear_Model(TestFunction):
         return J
 
     def abs_diff(self, x: np.ndarray):
-        return np.abs(self.function(x) - self.dataset[:-1])
+        return np.abs(self.function(x) - self.dataset[:, -1])
 
     # basically this is the objective function
     def S(self, x: np.ndarray, keep_record=True):
