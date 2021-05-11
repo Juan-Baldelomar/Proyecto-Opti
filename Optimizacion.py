@@ -78,7 +78,7 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
         x = x + d
         g = test_function.gradient(x)
 
-        return x
+    return x
 
 def buildSimilarityMatrix(solutions, rem_indexes):
     n = len(solutions)

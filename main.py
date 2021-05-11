@@ -40,6 +40,10 @@ dataset = linear_model.dataset[indexes, :]
 
 # plot result
 plt.scatter(dataset[:, 0], dataset[:, 1])
+
+y = Data.linear_model(dataset[:, 0].reshape((len(indexes), 1)), xopt)
+
+plt.plot(dataset[:, 0], y, color='red')
 plt.show()
 
 

@@ -86,8 +86,8 @@ def readData(filename):
 
 # ------------------------------------------------ MODELS TO GENERATE DATA ------------------------------------------------
 
-def linear_model(x):
-    return x
+def linear_model(x, coeff):
+    return np.matmul(x, coeff[:-1]) + coeff[-1]
 
 def linear_model2D(x, a1, a2, b):
     return a1 * x[:, 0] + a2 * x[:, 1] + b
