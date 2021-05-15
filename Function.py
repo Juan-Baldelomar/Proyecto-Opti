@@ -83,9 +83,7 @@ class Linear_Model(TestFunction):
         # sort Ri's
         self.getR(x)
 
-        sum_ = 0
-        for i in range(self.p):
-            sum_ += self.R_index[i][0]
+        sum_ = np.sum(self.R_index[:self.p, 0])
 
         if keep_record:
             self.f_k.append(sum_)

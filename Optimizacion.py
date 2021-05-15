@@ -99,7 +99,7 @@ def buildSimilarityMatrix(solutions, rem_indexes):
 
     if (-1, n-1) in rem_indexes:
         # remove last index
-        M[: -1] = np.inf
+        M[:,-1] = np.inf
         M[-1, :] = np.inf
 
     return M
@@ -138,19 +138,19 @@ def preprocess(solutions, S, abs_diff, r):
     return indexes
 
 
-def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
-    assert (0 <= pmin < pmax)
+def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, max_iter=400):
+    assert (1 <= pmin < pmax <= len(f_model.dataset))
 
     S = []              # vector of Sp
     abs_diff = []       # vector of abs diff between yi and model(x, ti)
     solutions = []      # vector of x^* for each pmin <= p <= pmax
 
     # compute set of solutions for p in range(pmin, pmax)
-    for p in range(pmin, pmax+1):
+    for p in range(pmin, pmax):
         f_model.p = p
 
         # find optimum
-        x_p = lm_lovo(x0, 0.01, 1e-4, 1, 2, f_model)
+        x_p = lm_lovo(x0, 0.01, 1e-4, 1, 2, f_model, max_iter=max_iter)
         solutions.append(x_p)
         S.append(f_model.S(x_p))
         abs_diff.append(f_model.abs_diff(x_p))
@@ -165,8 +165,10 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1):
     C = np.zeros(len(M))
 
     # calc epsilon if it is not given
+    M_aux = M[np.isfinite(M)]
+
     if epsilon == -1:
-        epsilon = np.min(M) + np.mean(M) / (1 + np.sqrt(pmax))
+        epsilon = np.min(M_aux) + np.mean(M_aux) / (1 + np.sqrt(pmax))
 
     for i in range(len(M)):
         k = 0
