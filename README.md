@@ -9,3 +9,6 @@ Proyecto Final del Curso de Optimización
 
 3. Work is based on the paper: 
   https://arxiv.org/pdf/1911.13078.pdf
+
+
+4. Recent version has linear model implemented

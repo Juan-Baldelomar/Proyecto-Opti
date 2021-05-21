@@ -78,46 +78,48 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
         x = x + d
         g = test_function.gradient(x)
 
-    return x
+    return x, g_norm
 
 def buildSimilarityMatrix(solutions, rem_indexes):
     n = len(solutions)
     M = np.zeros((n, n))
 
     # build similarity matrix taking advantage of its symmetry
-    for i in range(n-1):
+    for i in range(n):
+
+        # remove element
+        if i in rem_indexes:
+            M[i, :] = np.inf
+            M[:, i] = np.inf
+            continue
+
         for j in range(i):
-            if (i, j) in rem_indexes:
-                # remove element
-                M[i][j] = np.inf
-                M[j][i] = np.inf
-
-            else:
-                x_p, x_q = solutions[i], solutions[j]
-                M[i][j] = np.linalg.norm(x_p - x_q)
-                M[j][i] = M[i][j]
-
-    if (-1, n-1) in rem_indexes:
-        # remove last index
-        M[:,-1] = np.inf
-        M[-1, :] = np.inf
+            x_p, x_q = solutions[i][0], solutions[j][0]
+            M[i][j] = np.linalg.norm(x_p - x_q)
+            M[j][i] = M[i][j]
 
     return M
 
 # S and abs_diff are sorted from min_p to max_p
-def preprocess(solutions, S, abs_diff, r):
+def preprocess(solutions, S, abs_diff, r, tau):
     indexes = []
     p_min = 0
     S_min = S[0]
 
     # add indexes that should be eliminated
     for i in range(len(S)):
+
+        # check if lovo did not converge
+        if solutions[i][1] > tau:
+            indexes.append(i)
+            continue
+
         for j in range(i):
             if S[j] > S[i]:
-                indexes.append((i, j))
+                indexes.append(j)
 
         # retrieve model such that we have minimum Sp(xp^*)
-        if S[i] < S_min:
+        if S[i] < S_min and i not in indexes:
             S_min = S[i]
             p_min = i
 
@@ -133,32 +135,32 @@ def preprocess(solutions, S, abs_diff, r):
 
     # if k > r/2, then max_p model should be eliminated
     if k > r/2:
-        indexes.append((-1, len(solutions)-1))
+        indexes.append(len(solutions)-1)
 
     return indexes
 
 
-def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, max_iter=400):
+def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, tau=1e-4, max_iter=400):
     assert (1 <= pmin < pmax <= len(f_model.dataset))
 
     S = []              # vector of Sp
     abs_diff = []       # vector of abs diff between yi and model(x, ti)
-    solutions = []      # vector of x^* for each pmin <= p <= pmax
+    solutions = []      # vector of tuples (x^*, ||grad(x^*)||) for each pmin <= p <= pmax
 
     # compute set of solutions for p in range(pmin, pmax)
     for p in range(pmin, pmax):
         f_model.p = p
 
         # find optimum
-        x_p = lm_lovo(x0, 0.01, 1e-4, 1, 2, f_model, max_iter=max_iter)
-        solutions.append(x_p)
+        x_p, g_norm = lm_lovo(x0, 0.01, tau, 1, 2, f_model, max_iter=max_iter)
+        solutions.append((x_p, g_norm))
         S.append(f_model.S(x_p))
         abs_diff.append(f_model.abs_diff(x_p))
 
     solutions = np.array(solutions)
 
     # preprocess solutions
-    rem_indexes = preprocess(solutions, S, abs_diff, r=len(f_model.dataset))
+    rem_indexes = preprocess(solutions, S, abs_diff, r=len(f_model.dataset), tau=tau)
 
     # build similarity matrix
     M = buildSimilarityMatrix(solutions, rem_indexes)
@@ -168,7 +170,7 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, max_iter
     M_aux = M[np.isfinite(M)]
 
     if epsilon == -1:
-        epsilon = np.min(M_aux) + np.mean(M_aux) / (1 + np.sqrt(pmax))
+        epsilon = np.min(M_aux) + np.mean(M_aux) / (1 + np.sqrt(pmax)) if len(M_aux) > 0 else 0
 
     for i in range(len(M)):
         k = 0
@@ -185,4 +187,4 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, max_iter
             max_p = p
 
     # return x^* and maxp number of trusted points
-    return solutions[max_p], pmin + max_p
+    return solutions[max_p][0], pmin + max_p
