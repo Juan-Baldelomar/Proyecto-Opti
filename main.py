@@ -30,10 +30,7 @@ linear_model = TestFunction.Linear_Model(2, 1, dataset)
 x0 = np.array([1, 1])
 
 # find optimum and number of trusted points
-xopt, n_trusted_points = Optimizacion.RAFF(x0, linear_model, 80, 100, max_iter=100000)
-
-# read first trusted points indexes
-indexes = linear_model.R_index[:n_trusted_points, 1].astype(int)
+xopt, indexes = Optimizacion.RAFF(x0, linear_model, 80, 100, max_iter=100000)
 
 # new dataset without outliers
 dataset = linear_model.dataset[indexes, :]

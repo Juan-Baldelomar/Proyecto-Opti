@@ -49,6 +49,8 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
     g = test_function.gradient(x)
 
     for k in range(max_iter):
+        # get I_min (combination where first p values of Ri are the lowest)
+        test_function.getR(x)
 
         # Stoppage criteria
         g_norm = test_function.norm_g_k[-1]
@@ -143,9 +145,10 @@ def preprocess(solutions, S, abs_diff, r, tau):
 def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, tau=1e-4, max_iter=400):
     assert (1 <= pmin < pmax <= len(f_model.dataset))
 
-    S = []              # vector of Sp
-    abs_diff = []       # vector of abs diff between yi and model(x, ti)
-    solutions = []      # vector of tuples (x^*, ||grad(x^*)||) for each pmin <= p <= pmax
+    S = []                  # vector of Sp
+    abs_diff = []           # vector of abs diff between yi and model(x, ti)
+    solutions = []          # vector of tuples (x^*, ||grad(x^*)||) for each pmin <= p <= pmax
+    trusted_indexes = []    # vector of trusted indexes for each p
 
     # compute set of solutions for p in range(pmin, pmax)
     for p in range(pmin, pmax):
@@ -156,8 +159,9 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, tau=1e-4
         solutions.append((x_p, g_norm))
         S.append(f_model.S(x_p))
         abs_diff.append(f_model.abs_diff(x_p))
+        trusted_indexes.append(f_model.R_index[:p, 1].astype(int))
 
-    solutions = np.array(solutions)
+    #solutions = np.array(solutions)
 
     # preprocess solutions
     rem_indexes = preprocess(solutions, S, abs_diff, r=len(f_model.dataset), tau=tau)
@@ -187,4 +191,4 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, tau=1e-4
             max_p = p
 
     # return x^* and maxp number of trusted points
-    return solutions[max_p][0], pmin + max_p
+    return solutions[max_p][0], trusted_indexes[max_p]
