@@ -18,30 +18,48 @@ def generateLinearData(a, b, n=100, out_ratio=0.1):
     return np.column_stack((x_data, y_data))
 
 
+def saveData(filename, data:np.ndarray):
+    with open(filename, 'w', newline='') as file:
+        writer = csv.writer(file)
+        for row in data:
+            strrow = [x for x in row]
+            writer.writerow(strrow)
+
+
+def readData(filename):
+    data = []
+    with open(filename, 'r') as file:
+        rows = file.readlines()
+        for row in rows:
+            data.append([float(x) for x in str.split(row, ',')])
+
+    return np.array(data)
+
+
 """ The following function generates data from a model and perturbs the output with a gaussian distribution
     - f_model is the function model to generate the data. It must be a callable function. The function must ensure that it returns 
       a vector, not a matrix of (n, 1) because in that case the outliers wont be generated. The function must receive first the 
       features matrix (x) and then the other parameters (*args).
-      
+
     - *args are the additional arguments that the function receives. It can receive none
-    
+
     - x is the matrix of features to produce the output based in the f_model. If x is none, then x will be a matrix generated
       from a uniform distribution of size n * m and with U(a, b) ~ U(min_x, max_x). If m = 1 then x will be transformed into a
       vector rather than a matrix of shape (n, 1)
-      
+
     - out_ratio is the percentage of outliers in the dataset
-    
+
     - mean_noise is the mean of the gaussian for perturbing the output of f_model
     - std_noise is the std of the gaussian for perturbing the output of f_model
-    
+
     There are  n_out = out_ratio * n outliers generated. For that we select n_out index from y = f_model(x, args) and 
     we add values from a Uniform distribution ~ U(min_out, max_out). min_out and max_out should be big values in relation with
     the max and min output of the f_model so these points really become outliers. 
 """
 
-def generateRandomData(f_model, *args, x=None, n=100, m=1, min_x=0, max_x=100, out_ratio=0.1, mean_noise=0, std_noise=1,
-                       min_out=-1000, max_out=1000):
 
+def generateRandomData_2(f_model, *args, x=None, n=100, m=1, min_x=0, max_x=100, out_ratio=0.1, mean_noise=0, std_noise=1,
+                       min_out=-1000, max_out=1000):
     assert (out_ratio < 1)
     n_out = int(out_ratio * n)
 
@@ -64,24 +82,6 @@ def generateRandomData(f_model, *args, x=None, n=100, m=1, min_x=0, max_x=100, o
 
     # return features and output data in single matrix
     return np.column_stack((x, y))
-
-
-def saveData(filename, data:np.ndarray):
-    with open(filename, 'w', newline='') as file:
-        writer = csv.writer(file)
-        for row in data:
-            strrow = [x for x in row]
-            writer.writerow(strrow)
-
-
-def readData(filename):
-    data = []
-    with open(filename, 'r') as file:
-        rows = file.readlines()
-        for row in rows:
-            data.append([float(x) for x in str.split(row, ',')])
-
-    return np.array(data)
 
 
 # ------------------------------------------------ MODELS TO GENERATE DATA ------------------------------------------------

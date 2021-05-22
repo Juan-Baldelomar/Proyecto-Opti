@@ -7,7 +7,7 @@ import time
 
 
 def generateDatasets():
-    cuadratic_dataset = Data.generateRandomData(Data.cuadratic_model2D, 2, 3.5, 5, x=None, n=500,
+    cuadratic_dataset = Data.generateRandomData_2(Data.cuadratic_model2D, 2, 3.5, 5, x=None, n=500,
                                                 min_x=-50, max_x=50, std_noise=20, min_out=-50, max_out=1000)
     plt.scatter(cuadratic_dataset[:, 0], cuadratic_dataset[:, 1])
     plt.show()
