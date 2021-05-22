@@ -25,10 +25,10 @@ def check_tolerance(value, value_new, epislon=1e-8):
 def compute_direction(J: np.ndarray, gamma: float, g: np.ndarray):
     A = np.matmul(J.T, J) + np.diag([gamma]*J.shape[1])
     try:
-        print("gradient: ", g)
+        # print("gradient: ", g)
         L = np.linalg.cholesky(A)
         y = solve_triangular(L, -g, lower=True)
-        print("y: ", y)
+        # print("y: ", y)
         d = solve_triangular(L.T, y, lower=False)
         return d
     except np.linalg.LinAlgError:
@@ -56,7 +56,7 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
             break
 
         # Report
-        if k % 1 == 0:
+        if k % 50 == 0:
             print(" ")
             print("Iteration n.", k, "results:")
             print("|g(x)| = ", g_norm)
@@ -68,7 +68,7 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
             d = compute_direction(test_function.Jacobian(x), gamma, g)
 
             # Simple decrease test: (trust-region simplification)
-            if test_function.S(x+d, False) < test_function.S(x, False):
+            if test_function.S(x, False) > test_function.S(x+d, False):
                 break
             else:
                 lmbda = lmbda_hat * lmbda
@@ -147,6 +147,8 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, max_iter
 
     # compute set of solutions for p in range(pmin, pmax)
     for p in range(pmin, pmax):
+        print('-'*40)
+        print("RAFF p = ", p)
         f_model.p = p
 
         # find optimum

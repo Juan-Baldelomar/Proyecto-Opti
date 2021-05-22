@@ -3,7 +3,7 @@ import numpy as np
 
 class TestFunction(object):
     def __init__(self, n: int, p: int, dataset: np.ndarray):
-        self.n = n  # dimension of the space of observations
+        self.n = n # dimension of the space of observations
         self.p = p  # number of normal observations (r-p=number of outliers)
         self.r = len(dataset)  # total number of observations
         self.f_k = []
@@ -100,60 +100,46 @@ class Linear_Model(TestFunction):
         return J
 
 
-
-class Logistic_Model(TestFunction):
+class Polinomial_Model(TestFunction):
 
     def __init__(self, n, p, dataset: np.ndarray):
         super().__init__(n, p, dataset)
+        degree = self.n-1
+        powe = np.arange(degree) + 1
+        powe = -np.sort(-powe)  # powers are in descendent order
+        t_rep = np.column_stack((self.dataset[:, 0].reshape(-1,),)*degree)
+        t_rep = t_rep ** powe  # raise each column
 
-        # A cada observación se le concatena un 1 al final, para faciltar los
-        # cálculos en la función sigmoide
         ones = np.ones(shape=(self.r, 1))
-        self.x_1 = np.hstack((self.dataset[:, :-1], ones))
+        self.t_c1 = np.hstack((t_rep, ones))  # concatanates a ones column
 
     # model function to adjust
     def function(self, x: np.ndarray, keep_record=True):
+
         """
         :param keep_record: guardar la evaluación en el objeto
 
-        :param x: x1 y x2 son las primeras dos entradas, la última es x4
-        y el resto son x3
-
-        :return: su evaluación en el modelo logístico
+        :return: su evaluación en el modelo polinomial
 
         """
-        m = np.matmul(self.x_1, x[2:])
+        return np.matmul(self.t_c1, x).reshape(-1,)
 
-        return x[0] + x[1] / (1. + np.exp(-m))
+    def Jacobian(self, x: np.ndarray):
+
+        # get indexes of first-p Ri (lower values)
+        dataset_index = self.R_index[:self.p, 1].astype(int)
+
+        return -self.t_c1[dataset_index]
 
     # gradient of objective function
     def gradient(self, x: np.ndarray, keep_record=True):
-
-        grad = np.zeros(self.n)
-
         # get indexes of first-p Ri (lower values)
         dataset_index = self.R_index[:self.p, 1].astype(int)
         y_model_diff = self.dataset[:, -1] - self.function(x)
 
-        # partial x1
-        grad[0] = np.sum(-1. * y_model_diff[dataset_index])
+        J = self.Jacobian(x)
 
-        # partial x2
-        t_k_1 = self.x_1[dataset_index, :]
-        m = np.matmul(t_k_1, x[2:])
-        exp_m = np.exp(-m)
-        grad_F_x2 = -1. / (1. + exp_m)
-        grad[1] = np.sum(np.multiply(grad_F_x2, y_model_diff[dataset_index]))
-
-        # partials x3's
-        i = 2
-        while i < (self.n - 1):
-            grad_F_x3 = - x[1] * self.dataset[dataset_index, i] * exp_m / (1. + exp_m) ** 2
-            grad[i] = np.sum(np.multiply(grad_F_x3, y_model_diff[dataset_index]))
-
-        # partial x4
-        grad_F_x4 = - x[1] * exp_m / (1. + exp_m) ** 2
-        grad[-1] = -np.sum(np.multiply(grad_F_x4, y_model_diff[dataset_index]))
+        grad = np.matmul(J.T, y_model_diff[dataset_index])
 
         # record grad norm
         if keep_record:
@@ -162,29 +148,65 @@ class Logistic_Model(TestFunction):
 
         return grad
 
-    def Jacobian(self, x: np.ndarray):
+class Exponential_Model(TestFunction):
 
+    def __init__(self, n, p, dataset: np.ndarray):
+        super().__init__(n, p, dataset)
+
+    # model function to adjust
+    def function(self, x: np.ndarray, keep_record=True):
+        """
+        :param keep_record: guardar la evaluación en el objeto
+
+        :return: su evaluación en el modelo polinomial
+
+        """
+        m = np.matmul(self.dataset[:, :-1], x[2:])
+
+        return x[0] + x[1] * np.exp(-m)
+
+    def Jacobian(self, x: np.ndarray):
         J = np.zeros((self.p, self.n))
 
         # get indexes of first-p Ri (lower values)
         dataset_index = self.R_index[:self.p, 1].astype(int)
 
         # common terms
-        t_k_1 = self.x_1[dataset_index, :]
-        m = np.matmul(t_k_1, x[2:])
+        t_k = self.dataset[dataset_index, :-1]
+        m = np.matmul(t_k, x[2:])
         exp_m = np.exp(-m)
 
         # Set each Jacobian Entry
-        J[:, :0] = -1.
+        J[:, :0] = - 1.
 
-        J[:, 1] = -1. / (1. + exp_m)
+        J[:, 1] = - exp_m
 
-        J[:, 2:-1] = - x[1] * self.dataset[dataset_index, :-1] * exp_m / (1. + exp_m) ** 2
+        obs = self.dataset[dataset_index, :-1].reshape(-1,)
 
-        J[:, -1] = - x[1] * exp_m / (1. + exp_m) ** 2
+        m = np.multiply(obs, exp_m)
+
+        col = (x[1] * m).reshape(-1,)
+
+        J[:, 2] = col
 
         return J
 
+    # gradient of objective function
+    def gradient(self, x: np.ndarray, keep_record=True):
+        # get indexes of first-p Ri (lower values)
+        dataset_index = self.R_index[:self.p, 1].astype(int)
+        y_model_diff = self.dataset[:, -1] - self.function(x)
+
+        J = self.Jacobian(x)
+
+        grad = np.matmul(J.T, y_model_diff[dataset_index])
+
+        # record grad norm
+        if keep_record:
+            norm_gk = np.linalg.norm(grad)
+            self.norm_g_k.append(norm_gk)
+
+        return grad
 
 class Logistic_Model(TestFunction):
 
@@ -209,7 +231,9 @@ class Logistic_Model(TestFunction):
         """
         m = np.matmul(self.x_1, x[2:])
 
-        return x[0] + x[1] / (1. + np.exp(-m))
+        result = x[0] + x[1] / (1. + np.exp(-m))
+
+        return result.reshape(-1, )
 
     def Jacobian(self, x: np.ndarray):
 
@@ -228,7 +252,13 @@ class Logistic_Model(TestFunction):
 
         J[:, 1] = -1. / (1. + exp_m)
 
-        J[:, 2:-1] = - x[1] * self.dataset[dataset_index, :-1] * exp_m / (1. + exp_m) ** 2
+        factor = exp_m / (1. + exp_m) ** 2
+
+        obs = self.dataset[dataset_index, :-1].reshape(-1,)
+
+        J_i = np.multiply(obs, factor)
+
+        J[:, 2:-1] = - x[1] * J_i.reshape(-1, 1)
 
         J[:, -1] = x[1] * exp_m / (1. + exp_m) ** 2
 
@@ -269,115 +299,3 @@ class Logistic_Model(TestFunction):
 
         return grad
 
-
-class Polinomial_Model(TestFunction):
-
-    def __init__(self, n, p, dataset: np.ndarray):
-        super().__init__(n, p, dataset)
-
-        powe = np.arange(self.n) + 1
-        powe = -np.sort(-powe)  # powers are in descendent order
-        self.t_c1 = self.dataset[:, :-1] ** powe  # raise each column
-
-        ones = np.ones(shape=(self.r, 1))
-        self.t_c1 = np.hstack((self.t_c1, ones))  # concatanates a ones column
-
-    # model function to adjust
-    def function(self, x: np.ndarray, keep_record=True):
-
-        """
-        :param keep_record: guardar la evaluación en el objeto
-
-        :return: su evaluación en el modelo polinomial
-
-        """
-        return np.matmul(self.t_c1, x)
-
-    def Jacobian(self, x: np.ndarray):
-
-        # get indexes of first-p Ri (lower values)
-        dataset_index = self.R_index[:self.p, 1].astype(int)
-
-        return -self.t_c1[dataset_index]
-
-    # gradient of objective function
-    def gradient(self, x: np.ndarray, keep_record=True):
-
-        grad = np.zeros(self.n)
-
-        # get indexes of first-p Ri (lower values)
-        dataset_index = self.R_index[:self.p, 1].astype(int)
-        y_model_diff = self.dataset[:, -1] - self.function(x)
-
-        J = self.Jacobian(x)
-
-        for i in range(self.n):
-            grad[i] = np.sum(np.multiply(J[:, i], y_model_diff[dataset_index]))
-
-        # record grad norm
-        if keep_record:
-            norm_gk = np.linalg.norm(grad)
-            self.norm_g_k.append(norm_gk)
-
-        return grad
-
-
-class Exponential_Model(TestFunction):
-
-    def __init__(self, n, p, dataset: np.ndarray):
-        super().__init__(n, p, dataset)
-
-    # model function to adjust
-    def function(self, x: np.ndarray, keep_record=True):
-
-        """
-        :param keep_record: guardar la evaluación en el objeto
-
-        :return: su evaluación en el modelo polinomial
-
-        """
-        m = np.matmul(self.dataset[:, :-1], x[2:])
-
-        return x[0] + x[1] * np.exp(-m)
-
-    def Jacobian(self, x: np.ndarray):
-
-        J = np.zeros((self.p, self.n))
-
-        # get indexes of first-p Ri (lower values)
-        dataset_index = self.R_index[:self.p, 1].astype(int)
-
-        # common terms
-        t_k = self.dataset[dataset_index, :-1]
-        m = np.matmul(t_k, x[2:])
-        exp_m = np.exp(-m)
-
-        # Set each Jacobian Entry
-        J[:, :0] = - 1.
-
-        J[:, 1] = - exp_m
-
-        J[:, 2:] = x[1] * self.dataset[dataset_index, :-1] * exp_m
-
-        return J
-
-    # gradient of objective function
-    def gradient(self, x: np.ndarray, keep_record=True):
-
-        grad = np.zeros(self.n)
-
-        # get indexes of first-p Ri (lower values)
-        dataset_index = self.R_index[:self.p, 1].astype(int)
-        y_model_diff = self.dataset[:, -1] - self.function(x)
-
-        J = self.Jacobian(x)
-
-        for i in range(self.n):
-            grad[i] = np.sum(np.multiply(J[:, i], y_model_diff[dataset_index]))
-
-        # record grad norm
-        if keep_record:
-            norm_gk = np.linalg.norm(grad)
-            self.norm_g_k.append(norm_gk)
-
-        return grad
