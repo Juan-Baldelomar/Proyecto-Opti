@@ -30,14 +30,14 @@ r = 100  # number of observations
 m = 1  # dim of observations
 model = Function.Linear_Model
 out_ratio = .10  # outliers proportion of the observations
-max_iter = 100000
+max_iter = 50000
 
 if model == Function.Linear_Model:
     coeffs = np.array([-200., -1000])
     model_name = 'linear'
     gen_model = Data.linear_model
 elif model == Function.Polinomial_Model:
-    coeffs = np.array([0.5, -20., 300, 1000.])
+    coeffs = np.array([0.5, -2., 10., 20])
     model_name = 'cubic'
     gen_model = Data.polinomial_model
 elif model == Function.Exponential_Model:
@@ -56,10 +56,10 @@ dataset, real_index = generateDatasets(gen_model, coeffs, csv_filename, r, m, ou
 
 # create model function
 p = len(real_index)
-model = model(n, p, dataset)
+model = model(n, 80, dataset)
 
 # initial point
-x0 = coeffs + np.random.uniform(-1., 1., coeffs.shape[0])
+x0 = coeffs + np.random.normal(0, 1, coeffs.shape)
 
 # find optimum and number of trusted points
 p_min = int(.8 * r)
@@ -72,48 +72,21 @@ dataset = model.dataset[indexes, :]
 # plot result
 plt.scatter(dataset[:, 0], dataset[:, -1])
 
-y = gen_model(dataset[:, 0].reshape((len(indexes), 1)), xopt)
+x_model, y_model = dataset[:, 0], gen_model(dataset[:, 0].reshape((len(indexes), 1)), xopt)
 
-plt.plot(dataset[:, 0], y, color='blue')
+# sort model_data by x coordinate
+model_data = np.column_stack((x_model, y_model))
+model_data = model_data[np.argsort(model_data[:, 0])]
+
+
+plt.plot(model_data[:, 0], model_data[:, 1], color='blue')
 plt.title("Proposed model based in trusted points")
 plt.show()
 
 
-# # ------------------------------------------------ chew data ------------------------------------------------
 
-# # read dataset
-# dataset = Data.readData("data_chew.csv")
-#
-# dataset = dataset/1e+7
-# dataset = dataset[:, :-1]   # dump last column
-# dataset[:, (0, -1)] = dataset[:, (-1, 0)]
-#
-# # plot dataset
-# plt.scatter(dataset[:,0], dataset[:, -1])
+# dataset = Data.readData('linear_data.csv')
+# plt.scatter(dataset[:, 0], dataset[:, -1])
+# plt.title("Original data")
 # plt.show()
-#
-# # create model function
-# linear_model = TestFunction.Linear_Model(8, 30, dataset)
-#
-# # initial point
-# x0 = np.array([ 3.20702399e+01, -2.60840463e-02, -9.79738576e-02,  1.27298930e+00,
-#        -2.31645646e+00, -5.67326631e+00, -3.33947408e+01,  7.33625290e-02])
-#
-# # find optimum and number of trusted points
-# xopt, n_trusted_points = Optimizacion.RAFF(x0, linear_model, 35, 39, max_iter=10000)
-#
-# # read first trusted points indexes
-# indexes = linear_model.R_index[:n_trusted_points, 1].astype(int)
-#
-# # new dataset without outliers
-# dataset2 = linear_model.dataset[indexes, :]
-#
-# # plot result
-# plt.scatter(dataset2[:, 0], dataset2[:, -1])
-#
-# y = Data.linear_model(dataset[:, :-1], xopt)
-#
-# plt.plot(dataset[:, 0], y, color='red')
-# plt.show()
-#
-# linear_model.S(xopt)
+# x0 = np.array([1, 1])

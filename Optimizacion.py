@@ -42,15 +42,16 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
     assert (lmbda_0 > 0. and lmbda_hat > 1.)
 
     # get I_min (combination where first p values of Ri are the lowest)
-    test_function.getR(x)
+    #test_function.getR(x)
 
     # Initializaton
     lmbda = lmbda_0
-    g = test_function.gradient(x)
+    #g = test_function.gradient(x)
 
     for k in range(max_iter):
         # get I_min (combination where first p values of Ri are the lowest)
         test_function.getR(x)
+        g = test_function.gradient(x)
 
         # Stoppage criteria
         g_norm = test_function.norm_g_k[-1]
@@ -75,9 +76,9 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
                 lmbda = lmbda_hat * lmbda
 
         # Actualization
-        lmbda = max(lmbda_min, lmbda / np.sqrt(lmbda))  # TODO: in [max(lmbda_min, lmbda/np.sqrt(lmbda)), lmbda]
+        lmbda = max(lmbda_min, lmbda / lmbda_hat)  # TODO: in [max(lmbda_min, lmbda/np.sqrt(lmbda)), lmbda]
         x = x + d
-        g = test_function.gradient(x)
+
 
     return x, g_norm
 
@@ -141,7 +142,9 @@ def preprocess(solutions, S, abs_diff, r, tau):
     return indexes
 
 
-def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, tau=1e-4, max_iter=400):
+def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, lambda_min=0.1, lambda_0=1, lambda_hat=2,
+         tau=1e-4, max_iter=400):
+
     assert (1 <= pmin < pmax <= len(f_model.dataset))
 
     S = []                  # vector of Sp
@@ -156,7 +159,7 @@ def RAFF(x0: np.ndarray, f_model: TestFunction, pmin, pmax, epsilon=-1, tau=1e-4
         f_model.p = p
 
         # find optimum
-        x_p, g_norm = lm_lovo(x0, 0.01, tau, 1, 2, f_model, max_iter=max_iter)
+        x_p, g_norm = lm_lovo(x0, lambda_min, tau, lambda_0, lambda_hat, f_model, max_iter=max_iter)
         solutions.append((x_p, g_norm))
         S.append(f_model.S(x_p))
         abs_diff.append(f_model.abs_diff(x_p))

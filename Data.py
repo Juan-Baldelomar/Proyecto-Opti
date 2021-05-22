@@ -66,8 +66,8 @@ def generateRandomData(f_model, *args, x=None, n=100, m=1, min_x=0, max_x=100, o
 
     # generate x matrix (features data)
     if x is None:
-        # x = np.random.uniform(min_x, max_x, (n, m))
-        x = np.linspace(min_x, max_x, n)
+        x = np.random.uniform(min_x, max_x, (n, m))
+        #x = np.linspace(min_x, max_x, n)
 
         # if data has one column, reshape it as a vector
         if m == 1:
@@ -154,7 +154,7 @@ def polinomial_model(x, coeffs):
     degree = len(coeffs)-1
     powe = np.arange(degree) + 1
     powe = -np.sort(-powe)  # powers are in descendent order
-    x_rep = np.column_stack((x.rehape(-1,),)*degree)
+    x_rep = np.column_stack((x.reshape(-1,),)*degree)
     x_pow = x_rep ** powe  # raise each column
 
     ones = np.ones(shape=(x.shape[0], 1))

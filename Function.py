@@ -30,9 +30,10 @@ class TestFunction(object):
     def S(self, x: np.ndarray, keep_record=True):
 
         # sort Ri's
-        self.getR(x)
-
-        sum_ = np.sum(self.R_index[:self.p, 0])
+        #self.getR(x)
+        indexes = self.R_index[:self.p, 1].astype(int)
+        R = 1 / 2 * (self.function(x)[indexes] - self.dataset[indexes, -1]) ** 2
+        sum_ = np.sum(R)
 
         if keep_record:
             self.f_k.append(sum_)
