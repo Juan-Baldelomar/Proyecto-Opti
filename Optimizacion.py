@@ -30,10 +30,10 @@ def compute_direction(J: np.ndarray, gamma: float, g: np.ndarray):
         y = solve_triangular(L, -g, lower=True)
         # print("y: ", y)
         d = solve_triangular(L.T, y, lower=False)
-        return d
+        return d, 0
     except np.linalg.LinAlgError:
         print('\'A\' cholesky failed')
-        return None
+        return -g, 1
 
 
 def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
@@ -59,7 +59,7 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
             break
 
         # Report
-        if k % 50 == 0:
+        if k % 1 == 0:
             print(" ")
             print("Iteration n.", k, "results:")
             print("|g(x)| = ", g_norm)
@@ -67,7 +67,9 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
         while True:
             # Calculate direction
             gamma = lmbda * g_norm * g_norm
-            d = compute_direction(test_function.Jacobian(x), gamma, g)
+            d, reset = compute_direction(test_function.Jacobian(x), gamma, g)
+            if reset:
+                x = np.random.normal(0, 1, x.shape)
 
             # Simple decrease test: (trust-region simplification)
             if test_function.S(x, False) > test_function.S(x+d, False):
@@ -76,7 +78,7 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
                 lmbda = lmbda_hat * lmbda
 
         # Actualization
-        lmbda = max(lmbda_min, lmbda / lmbda_hat)  # TODO: in [max(lmbda_min, lmbda/np.sqrt(lmbda)), lmbda]
+        lmbda = lmbda / lmbda_hat # max(lmbda_min, lmbda / lmbda_hat)  # TODO: in [max(lmbda_min, lmbda/np.sqrt(lmbda)), lmbda]
         x = x + d
 
 
@@ -111,10 +113,10 @@ def preprocess(solutions, S, abs_diff, r, tau):
     # add indexes that should be eliminated
     for i in range(len(S)):
 
-        # check if lovo did not converge
-        if solutions[i][1] > tau:
-            indexes.append(i)
-            continue
+        # # check if lovo did not converge
+        # if solutions[i][1] > tau:
+        #     indexes.append(i)
+        #     continue
 
         for j in range(i):
             if S[j] > S[i]:
