@@ -30,7 +30,7 @@ r = 100  # number of observations
 m = 1  # dim of observations
 model = Function.Linear_Model
 out_ratio = .10  # outliers proportion of the observations
-max_iter = 50000
+max_iter = 100000
 
 if model == Function.Linear_Model:
     coeffs = np.array([-200., -1000])

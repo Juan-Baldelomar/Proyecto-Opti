@@ -79,7 +79,6 @@ def lm_lovo(x: np.ndarray, lmbda_min: float, epsilon: float, lmbda_0: float,
         lmbda = max(lmbda_min, lmbda / lmbda_hat)  # TODO: in [max(lmbda_min, lmbda/np.sqrt(lmbda)), lmbda]
         x = x + d
 
-
     return x, g_norm
 
 def buildSimilarityMatrix(solutions, rem_indexes):
