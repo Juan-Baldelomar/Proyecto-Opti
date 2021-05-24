@@ -167,7 +167,7 @@ class Logistic_Model(TestFunction):
 
         # A cada observación se le concatena un 1 al final, para faciltar los
         # cálculos en la función sigmoide
-        ones = np.ones(shape=(self.r, 1))
+        ones = -np.ones(shape=(self.r, 1))
         self.x_1 = np.hstack((self.dataset[:, :-1], ones))
 
     # model function to adjust

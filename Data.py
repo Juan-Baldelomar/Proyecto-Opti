@@ -175,7 +175,7 @@ def exponential_model(x, coeffs):
 
 def logistic_model(x, coeffs):
 
-    ones = np.ones(shape=(x.shape[0], 1))
+    ones = -np.ones(shape=(x.shape[0], 1))
 
     x_1 = np.hstack((x.reshape(-1, 1), ones))
 
@@ -184,3 +184,5 @@ def logistic_model(x, coeffs):
     result = coeffs[0] + coeffs[1] / (1. + np.exp(-m))
 
     return result.reshape(-1, )
+
+#

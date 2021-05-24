@@ -26,19 +26,24 @@ print("Init")
 # Params:
 
 # model
-r = 100  # number of observations
+# data = np.loadtxt("hola.txt")
+# dataset = data[:, :2]
+# flags = data[:, 2]
+# real_trust = np.where(flags == 0)[0]
+
+r = 10  # number of observations
 m = 1  # dim of observations
-model = Function.Polinomial_Model
+model = Function.Logistic_Model
 out_ratio = .10  # outliers proportion of the observations
-max_iter = 400
-np.random.seed(11)
+max_iter = 5000
+np.random.seed(1)
 
 if model == Function.Linear_Model:
     coeffs = np.array([-200., -1000])
     model_name = 'linear'
     gen_model = Data.linear_model
 elif model == Function.Polinomial_Model:
-    coeffs = np.array([0.5, -2., 10., 20])
+    coeffs = np.array([0.5, -2., 10., 20]) # np.array([0.5, -2., 10., 20])
     model_name = 'cubic'
     gen_model = Data.polinomial_model
 elif model == Function.Exponential_Model:
@@ -53,19 +58,19 @@ else:
 # read dataset
 csv_filename = model_name + '_' + str(r) + '_data_' + '.csv'
 n = len(coeffs)
-dataset, real_trust = generateDatasets(gen_model, coeffs, csv_filename, n_points=r, x_dim=m, out_ratio=out_ratio)
+# dataset, real_trust = generateDatasets(gen_model, coeffs, csv_filename, n_points=r, x_dim=m, out_ratio=out_ratio)
 
 # create model function
 p = len(real_trust)
-model = model(n, 80, dataset)
+model = model(n, p, dataset)
 
 # initial point
-x0 = coeffs + np.random.normal(0, 1, coeffs.shape)
+x0 = np.zeros_like(coeffs)  # coeffs + np.random.normal(0, 1, coeffs.shape)
 
 # find optimum and number of trusted points
-p_min = int(.8 * r)
+p_min = int(.5 * r)
 p_max = r
-xopt, classified_as_trust = Optimizacion.RAFF(x0, model, p_min, p_max, max_iter=max_iter)
+xopt, classified_as_trust = Optimizacion.RAFF(x0, model, p_min, p_max, max_iter=max_iter, real_trust=real_trust)
 
 # new dataset without outliers
 new_dataset = model.dataset[classified_as_trust, :]
@@ -85,7 +90,7 @@ mask_idx = np.ones(r)
 mask_idx[real_outliers] = 0
 markers = ['o' if idx in real_trust else '^' for idx in all_idx]
 colors = ['g' if idx in real_outliers_classified_as_outliers or
-                 idx in real_trust_classified_as_trust else 'r' for idx in all_idx]
+                 idx in real_trust_classified_as_trust else 'b' for idx in all_idx]
 
 for m, c, x, y in zip(markers, colors, dataset[:, 0], dataset[:, -1]):
     plt.scatter(x, y, marker=m, c=c)
@@ -102,6 +107,7 @@ model_data = model_data[np.argsort(model_data[:, 0])]
 plt.plot(model_data[:, 0], model_data[:, 1], color='blue')
 plt.title("Proposed model based in trusted points")
 plt.show()
+print("Relative error", np.linalg.norm(coeffs-xopt)/np.linalg.norm(coeffs))
 
 # dataset = Data.readData('linear_data.csv')
 # plt.scatter(dataset[:, 0], dataset[:, -1])
