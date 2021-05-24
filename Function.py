@@ -15,8 +15,22 @@ class TestFunction(object):
     def function(self, x: np.ndarray):
         raise NotImplementedError
 
-    def gradient(self, x: np.ndarray):
-        raise NotImplementedError
+    # gradient of objective function
+    def gradient(self, x: np.ndarray, keep_record=True):
+        # get indexes of first-p Ri (lower values)
+        dataset_index = self.R_index[:self.p, 1].astype(int)
+        y_model_diff = self.dataset[:, -1] - self.function(x)
+
+        J = self.Jacobian(x)
+
+        grad = np.matmul(J.T, y_model_diff[dataset_index])
+
+        # record grad norm
+        if keep_record:
+            norm_gk = np.linalg.norm(grad)
+            self.norm_g_k.append(norm_gk)
+
+        return grad
 
     def Jacobian(self, x: np.ndarray):
         raise NotImplementedError
@@ -56,26 +70,6 @@ class Linear_Model(TestFunction):
     # model function to adjust
     def function(self, x: np.ndarray, keep_record=True):
         return np.matmul(self.dataset[:, :-1], x[:-1]) + x[-1]
-
-    # gradient of objective function
-    def gradient(self, x: np.ndarray, keep_record=True):
-        grad = np.zeros(self.n)
-
-        # get indexes of first-p Ri (lower values)
-        dataset_index = self.R_index[:self.p, 1].astype(int)
-        y_model_diff = self.dataset[:, -1] - self.function(x)
-
-        for i in range(self.n - 1):
-            grad[i] = np.sum(np.multiply(-self.dataset[dataset_index, i], y_model_diff[dataset_index]))
-
-        grad[-1] = -np.sum(y_model_diff[dataset_index])
-
-        # record grad norm
-        if keep_record:
-            norm_gk = np.linalg.norm(grad)
-            self.norm_g_k.append(norm_gk)
-
-        return grad
 
     def Jacobian(self, x: np.ndarray):
         J = np.zeros((self.p, self.n))
@@ -121,23 +115,6 @@ class Polinomial_Model(TestFunction):
 
         return -self.t_c1[dataset_index]
 
-    # gradient of objective function
-    def gradient(self, x: np.ndarray, keep_record=True):
-        # get indexes of first-p Ri (lower values)
-        dataset_index = self.R_index[:self.p, 1].astype(int)
-        y_model_diff = self.dataset[:, -1] - self.function(x)
-
-        J = self.Jacobian(x)
-
-        grad = np.matmul(J.T, y_model_diff[dataset_index])
-
-        # record grad norm
-        if keep_record:
-            norm_gk = np.linalg.norm(grad)
-            self.norm_g_k.append(norm_gk)
-
-        return grad
-
 class Exponential_Model(TestFunction):
 
     def __init__(self, n, p, dataset: np.ndarray):
@@ -181,23 +158,6 @@ class Exponential_Model(TestFunction):
 
         return J
 
-    # gradient of objective function
-    def gradient(self, x: np.ndarray, keep_record=True):
-        # get indexes of first-p Ri (lower values)
-        dataset_index = self.R_index[:self.p, 1].astype(int)
-        y_model_diff = self.dataset[:, -1] - self.function(x)
-
-        J = self.Jacobian(x)
-
-        grad = np.matmul(J.T, y_model_diff[dataset_index])
-
-        # record grad norm
-        if keep_record:
-            norm_gk = np.linalg.norm(grad)
-            self.norm_g_k.append(norm_gk)
-
-        return grad
-
 class Logistic_Model(TestFunction):
 
     def __init__(self, n, p, dataset: np.ndarray):
@@ -205,7 +165,7 @@ class Logistic_Model(TestFunction):
 
         # A cada observación se le concatena un 1 al final, para faciltar los
         # cálculos en la función sigmoide
-        ones = np.ones(shape=(self.r, 1))
+        ones = -np.ones(shape=(self.r, 1))
         self.x_1 = np.hstack((self.dataset[:, :-1], ones))
 
     # model function to adjust
@@ -254,38 +214,5 @@ class Logistic_Model(TestFunction):
 
         return J
 
-    # gradient of objective function
-    def gradient(self, x: np.ndarray, keep_record=True):
 
-        grad = np.zeros(self.n)
-
-        # get indexes of first-p Ri (lower values)
-        dataset_index = self.R_index[:self.p, 1].astype(int)
-        y_model_diff = self.dataset[:, -1] - self.function(x)
-
-        J = self.Jacobian(x)
-
-        # partial x1
-        grad[0] = np.sum(-1. * y_model_diff[dataset_index])
-
-        # partial x2
-        grad_F_x2 = J[:, 1]
-        grad[1] = np.sum(np.multiply(grad_F_x2, y_model_diff[dataset_index]))
-
-        # partials x3's
-        i = 2
-        while i < (self.n - 1):
-            grad_F_x3 = J[:, i]
-            grad[i] = np.sum(np.multiply(grad_F_x3, y_model_diff[dataset_index]))
-
-        # partial x4
-        grad_F_x4 = J[:, -1]
-        grad[-1] = np.sum(np.multiply(grad_F_x4, y_model_diff[dataset_index]))
-
-        # record grad norm
-        if keep_record:
-            norm_gk = np.linalg.norm(grad)
-            self.norm_g_k.append(norm_gk)
-
-        return grad
 

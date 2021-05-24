@@ -86,7 +86,7 @@ def generateRandomData(f_model, *args, x=None, n=100, m=1, min_x=0, max_x=100, o
 
     # make elements outliers
     s = np.random.choice([-1., 1.])
-    out_noise = 7. * s * np.random.normal(mean_noise, std_noise, n_out) * np.random.uniform(min_out, max_out, n_out)
+    out_noise = 7. * s * np.abs(np.random.normal(mean_noise, std_noise, n_out)) * np.random.uniform(min_out, max_out, n_out)
     y[mask] = y[mask] + out_noise
 
     # return features and output data in single matrix
@@ -175,7 +175,7 @@ def exponential_model(x, coeffs):
 
 def logistic_model(x, coeffs):
 
-    ones = np.ones(shape=(x.shape[0], 1))
+    ones = -np.ones(shape=(x.shape[0], 1))
 
     x_1 = np.hstack((x.reshape(-1, 1), ones))
 
@@ -184,3 +184,5 @@ def logistic_model(x, coeffs):
     result = coeffs[0] + coeffs[1] / (1. + np.exp(-m))
 
     return result.reshape(-1, )
+
+#
